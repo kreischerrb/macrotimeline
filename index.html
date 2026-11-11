@@ -45,6 +45,8 @@
     --fat:  #db2777;           /* gordura */
     --warn-bg: #fff6e0;
     --warn-ink: #7a5300;
+    --danger: #c62828;
+    --on-danger: #ffffff;
     --toast-bg: #141a22;
     --toast-ink: #ffffff;
     --shadow: 0 1px 2px rgba(20, 26, 34, .06), 0 4px 16px rgba(20, 26, 34, .05);
@@ -70,6 +72,8 @@
       --fat:  #f472b6;
       --warn-bg: #2e2510;
       --warn-ink: #f3d48a;
+      --danger: #f87171;
+      --on-danger: #2a0606;
       --toast-bg: #e8edf3;
       --toast-ink: #0b0f14;
       --shadow: none;
@@ -92,6 +96,8 @@
     --fat:  #f472b6;
     --warn-bg: #2e2510;
     --warn-ink: #f3d48a;
+    --danger: #f87171;
+    --on-danger: #2a0606;
     --toast-bg: #e8edf3;
     --toast-ink: #0b0f14;
     --shadow: none;
@@ -177,6 +183,44 @@
   footer.credits { text-align: center; font-size: 12.5px; color: var(--muted); padding: 18px 8px 4px; }
   footer.credits div + div { margin-top: 4px; }
 
+  /* Seus dados */
+  #lastBackup { color: var(--ink); }
+  .data-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .btn.danger-link {
+    display: block; width: 100%; margin-top: 12px; background: transparent; color: var(--danger);
+    border: 1px solid var(--line);
+  }
+  .reminder {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    background: var(--warn-bg); color: var(--warn-ink); border-radius: 14px; padding: 10px 12px; font-size: 14px;
+  }
+  .card .reminder { margin-top: 10px; }
+  .reminder[hidden] { display: none; }
+
+  /* Janela de confirmação */
+  .modal {
+    position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .45);
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  }
+  .modal[hidden] { display: none; }
+  .modal-card {
+    background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius);
+    width: 100%; max-width: 420px; max-height: 100%; overflow: auto; padding: 18px;
+  }
+  .modal-card h3 { margin: 0 0 10px; font-size: 18px; }
+  .modal-card p { margin: 0 0 10px; color: var(--muted); }
+  .modal-card p b, .modal-card li b { color: var(--ink); }
+  .modal-card .summary { margin: 0 0 12px; padding-left: 20px; color: var(--ink); }
+  .modal-card input {
+    width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 12px; margin-bottom: 4px;
+    border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+  }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .modal-actions button[hidden] { display: none; }
+  .btn.danger { background: var(--danger); color: var(--on-danger); }
+  .btn:disabled { opacity: .45; cursor: default; }
+
   /* Aviso de versão nova */
   .update-banner {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -219,6 +263,10 @@
   <!-- Tela: Hoje -->
   <section class="view" id="view-hoje" data-title="Hoje">
     <div class="grid">
+      <div class="reminder" id="backupReminder" hidden>
+        <span>Faz mais de 7 dias sem backup dos seus dados.</span>
+        <button type="button" class="btn secondary small" id="reminderExportBtn">Exportar backup</button>
+      </div>
       <div class="card building">
         <div class="badge" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
@@ -274,7 +322,19 @@
         <div class="badge" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
         </div>
-        <div><b>Em construção</b><p>Metas, alimentos, backup e exportação virão nas próximas versões.</p></div>
+        <div><b>Em construção</b><p>Metas, alimentos e exportação em CSV virão nas próximas versões.</p></div>
+      </div>
+      <div class="card" id="dataCard">
+        <h2>Seus dados</h2>
+        <p id="lastBackup"></p>
+        <div class="reminder" id="backupWarn" hidden><span>Faz mais de 7 dias sem backup. Exporte um para não perder seus registros.</span></div>
+        <div class="data-actions">
+          <button type="button" class="btn" id="exportBtn">Exportar backup</button>
+          <button type="button" class="btn secondary" id="importBtn">Importar backup</button>
+        </div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <div class="hint">Seus dados ficam só neste aparelho. O backup é um arquivo .json com tudo o que o app guarda (menos chaves de API). Guarde-o em lugar seguro, como Arquivos ou Google Drive.</div>
+        <button type="button" class="btn danger-link" id="eraseBtn">Apagar todos os dados</button>
       </div>
       <div class="card">
         <h2>Sobre o app</h2>
@@ -312,10 +372,22 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <input type="text" id="modalInput" autocomplete="off" autocapitalize="characters" spellcheck="false" hidden>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="modalCancel">Cancelar</button>
+      <button type="button" class="btn" id="modalOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // Versão do app. Mude a cada nova versão, junto com a ESPECIFICACAO.md:
 // é ela que o aviso "Nova versão disponível" compara com a versão publicada.
-const APP_VERSION = "0.1.0";
+const APP_VERSION = "0.2.0";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -330,27 +402,100 @@ function toast(msg) {
 }
 
 /* ---------- Dados salvos no aparelho ----------
-   Tudo fica no localStorage, na chave abaixo. Nesta versão só a escolha do tema é salva.
-   Ao salvar, o app mantém o que já existir na chave, para não apagar dados de versões futuras. */
+   Tudo fica no localStorage, na chave abaixo, num objeto só (o formato está descrito na ESPECIFICACAO.md):
+     schema       número do formato (sobe quando o formato muda; os dados antigos são migrados)
+     settings     ajustes do app (por enquanto, o tema)
+     profile      perfil da pessoa                       (próximas etapas)
+     goals        metas de calorias e macros             (próximas etapas)
+     customFoods  alimentos cadastrados pela pessoa      (próximas etapas)
+     days         refeições por dia: { "AAAA-MM-DD": { meals: [] } }
+     weights      registros de peso                      (próximas etapas)
+     secrets      chaves de API: NUNCA entram no backup
+     device       informações só deste aparelho (data do último backup): também não entram no backup */
 const STORAGE_KEY = 'macrotimeline.v1';
+const SCHEMA = 2;
 const THEMES = ['auto', 'light', 'dark'];
 const THEME_NAMES = { auto: 'Automático', light: 'Claro', dark: 'Escuro' };
 const THEME_COLOR = { light: '#f3f5f8', dark: '#0b0f14' };
 
-function loadState() {
-  let s = {};
-  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { s = {}; }
-  if (typeof s !== 'object' || Array.isArray(s)) s = {};
-  if (!s.settings || typeof s.settings !== 'object') s.settings = {};
-  if (!THEMES.includes(s.settings.theme)) s.settings.theme = 'auto';
-  if (!s.schema) s.schema = 1;
+const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+
+// Estado inicial (vazio), usado na primeira abertura e depois de "Apagar todos os dados".
+function defaultState() {
+  return {
+    schema: SCHEMA,
+    settings: { theme: 'auto' },
+    profile: {},
+    goals: {},
+    customFoods: [],
+    days: {},
+    weights: [],
+    secrets: {},
+    device: { createdAt: new Date().toISOString(), lastBackupAt: null }
+  };
+}
+
+// Leva dados de formatos antigos para o formato atual, sem descartar nada.
+// Cada mudança futura de formato ganha um passo aqui (if (s.schema === 2) { ...; s.schema = 3; }).
+function migrate(s) {
+  if (!s.schema || s.schema === 1) {
+    // Versão 0.1.0: só havia settings.theme. Os demais espaços são criados vazios em normalize().
+    s.schema = 2;
+  }
   return s;
 }
-const state = loadState();
 
-function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch (e) { toast('Não foi possível salvar neste navegador.'); }
+// Garante que cada espaço existe e tem o tipo certo. Mantém campos desconhecidos (de versões futuras).
+function normalize(s) {
+  const d = defaultState();
+  if (!isObj(s.settings)) s.settings = {};
+  if (!THEMES.includes(s.settings.theme)) s.settings.theme = 'auto';
+  if (!isObj(s.profile)) s.profile = {};
+  if (!isObj(s.goals)) s.goals = {};
+  if (!Array.isArray(s.customFoods)) s.customFoods = [];
+  if (!isObj(s.days)) s.days = {};
+  if (!Array.isArray(s.weights)) s.weights = [];
+  if (!isObj(s.secrets)) s.secrets = {};
+  if (!isObj(s.device)) s.device = {};
+  if (typeof s.device.createdAt !== 'string') s.device.createdAt = d.device.createdAt;
+  if (typeof s.device.lastBackupAt !== 'string') s.device.lastBackupAt = null;
+  return s;
+}
+
+// Se o aparelho tiver dados de um formato mais novo que este app entende
+// (por exemplo, depois de voltar para uma versão antiga), o app não regrava por cima.
+let storageIsNewer = false;
+
+function loadState() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { s = null; }
+  if (!isObj(s)) return defaultState();
+  if (typeof s.schema === 'number' && s.schema > SCHEMA) storageIsNewer = true;
+  else migrate(s);
+  return normalize(s);
+}
+let state = loadState();
+// Grava já no formato novo quem veio da versão 0.1.0 (só com o tema salvo).
+if (!storageIsNewer) saveState(true);
+
+// Devolve true se conseguiu gravar.
+function saveState(quiet) {
+  if (storageIsNewer) {
+    if (!quiet) toast('Os dados deste aparelho são de uma versão mais nova do app. Atualize o app.');
+    return false;
+  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return true; }
+  catch (e) { if (!quiet) toast('Não foi possível salvar neste navegador.'); return false; }
+}
+
+// Conta os dias que têm pelo menos uma refeição.
+function countDaysWithMeals(days) {
+  return Object.keys(days || {}).filter((k) => isObj(days[k]) && Array.isArray(days[k].meals) && days[k].meals.length > 0).length;
+}
+// Há algo além do tema para proteger com backup?
+function hasUserData(s) {
+  return Object.keys(s.profile).length > 0 || Object.keys(s.goals).length > 0 ||
+    s.customFoods.length > 0 || s.weights.length > 0 || countDaysWithMeals(s.days) > 0;
 }
 
 /* ---------- Tema (claro, escuro ou automático) ---------- */
@@ -382,6 +527,234 @@ document.querySelectorAll('[data-theme-choice]').forEach((b) => {
     toast('Tema: ' + THEME_NAMES[state.settings.theme]);
   });
 });
+
+/* ---------- Janela de confirmação ----------
+   Uso: const ok = await askConfirm({ title, html, okText, danger, typeWord }).
+   Com typeWord, o botão só funciona depois de a pessoa digitar a palavra. */
+function askConfirm(opts) {
+  return new Promise((resolve) => {
+    const modal = $('modal'), ok = $('modalOk'), cancel = $('modalCancel'), input = $('modalInput');
+    $('modalTitle').textContent = opts.title;
+    $('modalBody').innerHTML = opts.html || '';
+    ok.textContent = opts.okText || 'Confirmar';
+    ok.classList.toggle('danger', !!opts.danger);
+    input.hidden = !opts.typeWord;
+    cancel.hidden = !!opts.noCancel;
+    input.value = '';
+    input.placeholder = opts.typeWord || '';
+    const typedOk = () => !opts.typeWord || input.value.trim().toUpperCase() === opts.typeWord;
+    ok.disabled = !typedOk();
+    input.oninput = () => { ok.disabled = !typedOk(); };
+    const close = (answer) => {
+      modal.hidden = true;
+      ok.onclick = cancel.onclick = modal.onclick = input.oninput = null;
+      document.removeEventListener('keydown', onKey);
+      resolve(answer);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(false); };
+    ok.onclick = () => { if (typedOk()) close(true); };
+    cancel.onclick = () => close(false);
+    modal.onclick = (e) => { if (e.target === modal) close(false); };
+    document.addEventListener('keydown', onKey);
+    modal.hidden = false;
+    if (opts.typeWord) input.focus(); else cancel.focus();
+  });
+}
+
+/* ---------- Seus dados: backup, restauração e apagar ---------- */
+const BACKUP_APP = 'MacroTimeline';
+const BACKUP_KIND = 'backup';
+// Só estes espaços entram no backup. "secrets" (chaves de API) e "device" ficam de fora de propósito:
+// assim, qualquer coisa nova que não esteja nesta lista também fica fora do arquivo.
+const BACKUP_FIELDS = ['settings', 'profile', 'goals', 'customFoods', 'days', 'weights'];
+// Segurança extra: nenhum campo com cara de chave de API sai nos ajustes, mesmo se alguém salvar lá por engano.
+const SECRET_NAME = /api.?key|token|secret|senha|password/i;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const BACKUP_REMINDER_DAYS = 7;
+
+const pad2 = (n) => String(n).padStart(2, '0');
+const isoDay = (d) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const brDate = (d) => pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
+const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+
+function stripSecrets(obj) {
+  const out = {};
+  Object.keys(obj).forEach((k) => { if (!SECRET_NAME.test(k)) out[k] = obj[k]; });
+  return out;
+}
+
+function buildBackup() {
+  const data = { schema: SCHEMA };
+  BACKUP_FIELDS.forEach((f) => { data[f] = JSON.parse(JSON.stringify(state[f])); });
+  data.settings = stripSecrets(data.settings);
+  return { app: BACKUP_APP, kind: BACKUP_KIND, exportedAt: new Date().toISOString(), appVersion: APP_VERSION, data };
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function downloadFile(text, name) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+function markBackupDone() {
+  state.device.lastBackupAt = new Date().toISOString();
+  saveState(true);
+  renderDataCard();
+}
+
+async function exportBackup() {
+  const text = JSON.stringify(buildBackup(), null, 2);
+  const name = 'macrotimeline-backup-' + isoDay(new Date()) + '.json';
+  // No iPhone, o download direto costuma não funcionar no app instalado: usa a folha de compartilhamento
+  // (lá a pessoa escolhe "Salvar em Arquivos"). Nada é feito antes do share para não perder o toque do usuário.
+  if (isIOS() && navigator.share && navigator.canShare) {
+    let file = null;
+    try { file = new File([text], name, { type: 'application/json' }); } catch (e) { file = null; }
+    if (file && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        markBackupDone();
+        toast('Backup exportado');
+      } catch (e) {
+        if (e && e.name === 'AbortError') toast('Backup cancelado');
+        else toast('Não foi possível compartilhar o backup.');
+      }
+      return;
+    }
+  }
+  downloadFile(text, name);
+  markBackupDone();
+  toast('Backup salvo em Downloads: ' + name);
+}
+
+// Lê e confere o arquivo. Devolve { data, exportedAt } ou lança um erro com mensagem para a pessoa.
+function parseBackup(text) {
+  let obj;
+  try { obj = JSON.parse(text); } catch (e) { throw new Error('Este arquivo não é um backup do MacroTimeline.'); }
+  if (!isObj(obj) || obj.app !== BACKUP_APP || obj.kind !== BACKUP_KIND || !isObj(obj.data)) {
+    throw new Error('Este arquivo não é um backup do MacroTimeline.');
+  }
+  const s = obj.data;
+  if (typeof s.schema !== 'number' || s.schema < 1) throw new Error('Este backup está incompleto ou danificado.');
+  if (s.schema > SCHEMA) throw new Error('Este backup foi feito numa versão mais nova do app. Atualize o app e tente de novo.');
+  // Nunca importa chaves de API nem informações de outro aparelho, mesmo que venham no arquivo.
+  delete s.secrets;
+  delete s.device;
+  migrate(s);
+  normalize(s);
+  s.settings = stripSecrets(s.settings);
+  const when = new Date(obj.exportedAt);
+  return { data: s, exportedAt: isNaN(when) ? null : when };
+}
+
+const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
+
+async function importBackup(file) {
+  if (!file) return;
+  let parsed;
+  try {
+    if (file.size > MAX_BACKUP_BYTES) throw new Error('Este arquivo é grande demais para ser um backup do MacroTimeline.');
+    const text = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
+      r.readAsText(file);
+    });
+    parsed = parseBackup(text);
+  } catch (e) {
+    await askConfirm({ title: 'Não foi possível importar', html: '<p>' + esc(e.message) + '</p><p>Seus dados atuais não foram alterados.</p>', okText: 'Entendi', noCancel: true });
+    return;
+  }
+  const s = parsed.data;
+  const lines = [
+    'Backup de <b>' + (parsed.exportedAt ? brDate(parsed.exportedAt) : 'data desconhecida') + '</b>',
+    plural(countDaysWithMeals(s.days), 'dia com refeições', 'dias com refeições'),
+    plural(s.customFoods.length, 'alimento próprio', 'alimentos próprios'),
+    plural(s.weights.length, 'registro de peso', 'registros de peso'),
+    'Tema: ' + THEME_NAMES[s.settings.theme]
+  ];
+  const ok = await askConfirm({
+    title: 'Restaurar este backup?',
+    html: '<ul class="summary">' + lines.map((l) => '<li>' + l + '</li>').join('') + '</ul>' +
+      '<p>Os dados atuais deste aparelho serão <b>substituídos</b> pelos do backup.</p>',
+    okText: 'Substituir dados'
+  });
+  if (!ok) return;
+  if (storageIsNewer) { toast('Os dados deste aparelho são de uma versão mais nova do app. Atualize o app.'); return; }
+  // Mantém as chaves de API e as informações deste aparelho (data do último backup).
+  s.secrets = state.secrets;
+  s.device = state.device;
+  const previous = state;
+  state = s;
+  if (!saveState()) { state = previous; return; }
+  applyTheme();
+  renderDataCard();
+  toast('Backup restaurado');
+}
+
+async function eraseAllData() {
+  const first = await askConfirm({
+    title: 'Apagar todos os dados?',
+    html: '<p>Isto apaga deste aparelho tudo o que o app guarda: refeições, alimentos próprios, metas, perfil, pesos, ajustes e chaves de API.</p>' +
+      '<p><b>Não dá para desfazer.</b> Se ainda não fez, exporte um backup antes.</p>',
+    okText: 'Continuar', danger: true
+  });
+  if (!first) return;
+  const second = await askConfirm({
+    title: 'Confirme para apagar',
+    html: '<p>Digite <b>APAGAR</b> para confirmar.</p>',
+    okText: 'Apagar tudo', danger: true, typeWord: 'APAGAR'
+  });
+  if (!second) return;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* segue mesmo assim */ }
+  storageIsNewer = false;
+  state = defaultState();
+  saveState(true);
+  applyTheme();
+  renderDataCard();
+  toast('Todos os dados foram apagados');
+}
+
+// Dias desde o último backup (ou desde que o app começou a ser usado, se nunca houve backup).
+function backupIsOverdue() {
+  if (!hasUserData(state)) return false;
+  const ref = new Date(state.device.lastBackupAt || state.device.createdAt);
+  if (isNaN(ref)) return true;
+  return Date.now() - ref.getTime() > BACKUP_REMINDER_DAYS * DAY_MS;
+}
+
+function renderDataCard() {
+  const last = state.device.lastBackupAt ? new Date(state.device.lastBackupAt) : null;
+  let text = 'Nenhum backup exportado ainda.';
+  if (last && !isNaN(last)) {
+    const days = Math.floor((Date.now() - last.getTime()) / DAY_MS);
+    text = 'Último backup: ' + brDate(last) + (days <= 0 ? ' (hoje)' : days === 1 ? ' (ontem)' : ' (há ' + days + ' dias)');
+  }
+  $('lastBackup').textContent = text;
+  const overdue = backupIsOverdue();
+  $('backupWarn').hidden = !overdue;
+  $('backupReminder').hidden = !overdue;
+}
+
+$('exportBtn').addEventListener('click', exportBackup);
+$('reminderExportBtn').addEventListener('click', exportBackup);
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = ''; // permite escolher o mesmo arquivo de novo
+  importBackup(f);
+});
+$('eraseBtn').addEventListener('click', eraseAllData);
+// No iPhone, o filtro de tipo de arquivo às vezes deixa o .json cinza (sem poder escolher): sem filtro lá.
+if (isIOS()) $('importFile').removeAttribute('accept');
 
 /* ---------- Navegação entre as telas ---------- */
 const VIEWS = ['hoje', 'registrar', 'historico', 'ajustes'];
@@ -432,11 +805,13 @@ async function checkForUpdate(manual) {
 $('checkUpdateBtn').addEventListener('click', () => checkForUpdate(true));
 // Ao voltar para o app, confere de novo (no máximo a cada 10 minutos).
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') renderDataCard();
   if (document.visibilityState === 'visible' && Date.now() - lastUpdateCheck > 10 * 60 * 1000) checkForUpdate(false);
 });
 
 /* ---------- Início ---------- */
 applyTheme();
+renderDataCard();
 $('appVersion').textContent = 'Versão ' + APP_VERSION;
 $('footerVersion').textContent = 'MacroTimeline · versão ' + APP_VERSION;
 showView('hoje');
