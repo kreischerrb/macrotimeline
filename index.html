@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MacroTimeline</title>
+<meta name="description" content="Registro pessoal da alimentação do dia, com foco em macros.">
+<meta name="theme-color" content="#0b0f14">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Macros">
+<script>
+  // Aplica o tema salvo antes de desenhar a tela, para não piscar branco no escuro.
+  (function () {
+    var t = 'auto';
+    try {
+      var s = JSON.parse(localStorage.getItem('macrotimeline.v1') || '{}');
+      if (s && s.settings && (s.settings.theme === 'light' || s.settings.theme === 'dark')) t = s.settings.theme;
+    } catch (e) { /* sem acesso ao armazenamento: fica no automático */ }
+    if (t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+    var dark = t === 'dark' || (t === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', dark ? '#0b0f14' : '#f3f5f8');
+  })();
+</script>
+<style>
+  /* ---------- Cores (tema claro) ----------
+     As cores de cada macro ficam aqui, num lugar só, para os anéis e gráficos das próximas etapas. */
+  :root {
+    --bg: #f3f5f8;
+    --card: #ffffff;
+    --card-2: #eef1f5;
+    --ink: #141a22;
+    --muted: #5b6675;
+    --line: #e1e6ec;
+    --accent: #0f9d6b;
+    --on-accent: #ffffff;
+    --track: #e4e8ee;          /* trilho cinza dos anéis */
+    --kcal: #0f9d6b;           /* calorias */
+    --prot: #2563eb;           /* proteína */
+    --carb: #b7791f;           /* carboidrato */
+    --fat:  #db2777;           /* gordura */
+    --warn-bg: #fff6e0;
+    --warn-ink: #7a5300;
+    --toast-bg: #141a22;
+    --toast-ink: #ffffff;
+    --shadow: 0 1px 2px rgba(20, 26, 34, .06), 0 4px 16px rgba(20, 26, 34, .05);
+    --radius: 20px;
+    --nav-h: 64px;
+    color-scheme: light;
+  }
+  /* Tema escuro: vale no automático com o celular escuro, ou quando fixado em Escuro. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b0f14;
+      --card: #151b23;
+      --card-2: #1c242e;
+      --ink: #e8edf3;
+      --muted: #8a96a6;
+      --line: #252e39;
+      --accent: #34d399;
+      --on-accent: #06281c;
+      --track: #232c37;
+      --kcal: #34d399;
+      --prot: #60a5fa;
+      --carb: #fbbf24;
+      --fat:  #f472b6;
+      --warn-bg: #2e2510;
+      --warn-ink: #f3d48a;
+      --toast-bg: #e8edf3;
+      --toast-ink: #0b0f14;
+      --shadow: none;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0f14;
+    --card: #151b23;
+    --card-2: #1c242e;
+    --ink: #e8edf3;
+    --muted: #8a96a6;
+    --line: #252e39;
+    --accent: #34d399;
+    --on-accent: #06281c;
+    --track: #232c37;
+    --kcal: #34d399;
+    --prot: #60a5fa;
+    --carb: #fbbf24;
+    --fat:  #f472b6;
+    --warn-bg: #2e2510;
+    --warn-ink: #f3d48a;
+    --toast-bg: #e8edf3;
+    --toast-ink: #0b0f14;
+    --shadow: none;
+    color-scheme: dark;
+  }
+
+  /* ---------- Base ---------- */
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; }
+
+  /* Topo: respeita o entalhe do iPhone (safe-area). */
+  header.top {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left));
+  }
+  header.top .eyebrow { font-size: 13px; color: var(--muted); font-weight: 600; }
+  header.top h1 { margin: 2px 0 0; font-size: 28px; line-height: 1.15; letter-spacing: -.01em; }
+
+  main {
+    max-width: 640px; margin: 0 auto;
+    padding: 4px calc(16px + env(safe-area-inset-right)) calc(var(--nav-h) + 24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  }
+  .view[hidden] { display: none; }
+
+  /* ---------- Cartões (estilo dashboard) ---------- */
+  .grid { display: grid; gap: 12px; }
+  .grid.two { grid-template-columns: 1fr 1fr; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+  .card p { margin: 0; color: var(--muted); }
+
+  /* Aviso "em construção" */
+  .building { display: flex; gap: 14px; align-items: center; }
+  .building .badge {
+    flex: 0 0 auto; width: 48px; height: 48px; border-radius: 14px; background: var(--card-2);
+    display: grid; place-items: center; color: var(--accent);
+  }
+  .building b { display: block; color: var(--ink); font-size: 16px; }
+
+  /* Anel (para as próximas etapas): <div class="ring" style="--p:.6; --c:var(--prot)"></div> */
+  .ring {
+    --p: 0; --c: var(--accent); --size: 72px; --w: 9px;
+    width: var(--size); height: var(--size); border-radius: 50%;
+    background: conic-gradient(var(--c) calc(var(--p) * 360deg), var(--track) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--w)), #000 calc(100% - var(--w) + 1px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - var(--w)), #000 calc(100% - var(--w) + 1px));
+  }
+
+  /* Legenda das cores dos macros */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* ---------- Ajustes ---------- */
+  .seg {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px;
+    background: var(--card-2); border-radius: 14px;
+  }
+  .seg button {
+    border: 0; background: transparent; padding: 10px 6px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+  :root[data-theme="dark"] .seg button[aria-pressed="true"] { outline: 1px solid var(--line); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { outline: 1px solid var(--line); } }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .btn {
+    border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 700; cursor: pointer;
+    background: var(--accent); color: var(--on-accent);
+  }
+  .btn.secondary { background: var(--card-2); color: var(--ink); }
+  .btn.small { padding: 7px 12px; font-size: 13px; }
+  .about-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  footer.credits { text-align: center; font-size: 12.5px; color: var(--muted); padding: 18px 8px 4px; }
+  footer.credits div + div { margin-top: 4px; }
+
+  /* Aviso de versão nova */
+  .update-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--warn-bg); color: var(--warn-ink); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  /* ---------- Barra de navegação inferior ---------- */
+  nav.tabs {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 6;
+    background: var(--card); border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  nav.tabs button {
+    height: var(--nav-h); border: 0; background: transparent; padding: 8px 2px; font-size: 12px; font-weight: 600;
+    color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  }
+  nav.tabs svg { width: 24px; height: 24px; }
+  nav.tabs button[aria-current="page"] { color: var(--accent); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--toast-bg); color: var(--toast-ink); padding: 10px 16px; border-radius: 12px; font-size: 14px;
+    max-width: calc(100% - 32px); z-index: 10; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow">MacroTimeline</div>
+  <h1 id="screenTitle">Hoje</h1>
+</header>
+
+<main>
+  <div id="updateBanner"></div>
+
+  <!-- Tela: Hoje -->
+  <section class="view" id="view-hoje" data-title="Hoje">
+    <div class="grid">
+      <div class="card building">
+        <div class="badge" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+        </div>
+        <div><b>Em construção</b><p>Aqui vão aparecer os anéis de calorias e macros do dia.</p></div>
+      </div>
+      <div class="card">
+        <h2>Cores dos macros</h2>
+        <p>Prévia das cores que os anéis e gráficos vão usar.</p>
+        <div class="legend">
+          <span><i style="background:var(--kcal)"></i>Calorias</span>
+          <span><i style="background:var(--prot)"></i>Proteína</span>
+          <span><i style="background:var(--carb)"></i>Carboidrato</span>
+          <span><i style="background:var(--fat)"></i>Gordura</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tela: Registrar -->
+  <section class="view" id="view-registrar" data-title="Registrar" hidden>
+    <div class="card building">
+      <div class="badge" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+      </div>
+      <div><b>Em construção</b><p>Aqui você vai registrar o que comeu, por texto.</p></div>
+    </div>
+  </section>
+
+  <!-- Tela: Histórico -->
+  <section class="view" id="view-historico" data-title="Histórico" hidden>
+    <div class="card building">
+      <div class="badge" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+      </div>
+      <div><b>Em construção</b><p>Aqui vão aparecer os dias anteriores e os gráficos.</p></div>
+    </div>
+  </section>
+
+  <!-- Tela: Ajustes -->
+  <section class="view" id="view-ajustes" data-title="Ajustes" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Aparência</h2>
+        <div class="seg" role="group" aria-label="Tema">
+          <button type="button" data-theme-choice="auto">Automático</button>
+          <button type="button" data-theme-choice="light">Claro</button>
+          <button type="button" data-theme-choice="dark">Escuro</button>
+        </div>
+        <div class="hint">O automático segue o tema do celular.</div>
+      </div>
+      <div class="card building">
+        <div class="badge" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+        </div>
+        <div><b>Em construção</b><p>Metas, alimentos, backup e exportação virão nas próximas versões.</p></div>
+      </div>
+      <div class="card">
+        <h2>Sobre o app</h2>
+        <div class="about-row">
+          <b id="appVersion"></b>
+          <button type="button" class="btn secondary small" id="checkUpdateBtn">Procurar nova versão</button>
+        </div>
+      </div>
+    </div>
+    <footer class="credits">
+      <div id="footerVersion"></div>
+      <div>Dados nutricionais: Tabela TACO – NEPA/Unicamp</div>
+    </footer>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Telas">
+  <button type="button" data-view="hoje">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"/><circle cx="12" cy="12" r="2.5"/></svg>
+    Hoje
+  </button>
+  <button type="button" data-view="registrar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>
+    Registrar
+  </button>
+  <button type="button" data-view="historico">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>
+    Histórico
+  </button>
+  <button type="button" data-view="ajustes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    Ajustes
+  </button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// Versão do app. Mude a cada nova versão, junto com a ESPECIFICACAO.md:
+// é ela que o aviso "Nova versão disponível" compara com a versão publicada.
+const APP_VERSION = "0.1.0";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- Dados salvos no aparelho ----------
+   Tudo fica no localStorage, na chave abaixo. Nesta versão só a escolha do tema é salva.
+   Ao salvar, o app mantém o que já existir na chave, para não apagar dados de versões futuras. */
+const STORAGE_KEY = 'macrotimeline.v1';
+const THEMES = ['auto', 'light', 'dark'];
+const THEME_NAMES = { auto: 'Automático', light: 'Claro', dark: 'Escuro' };
+const THEME_COLOR = { light: '#f3f5f8', dark: '#0b0f14' };
+
+function loadState() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { s = {}; }
+  if (typeof s !== 'object' || Array.isArray(s)) s = {};
+  if (!s.settings || typeof s.settings !== 'object') s.settings = {};
+  if (!THEMES.includes(s.settings.theme)) s.settings.theme = 'auto';
+  if (!s.schema) s.schema = 1;
+  return s;
+}
+const state = loadState();
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('Não foi possível salvar neste navegador.'); }
+}
+
+/* ---------- Tema (claro, escuro ou automático) ---------- */
+const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+function applyTheme() {
+  const t = state.settings.theme;
+  const root = document.documentElement;
+  if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+  else root.removeAttribute('data-theme');
+  const dark = t === 'dark' || (t === 'auto' && !!darkQuery && darkQuery.matches);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? THEME_COLOR.dark : THEME_COLOR.light);
+  document.querySelectorAll('[data-theme-choice]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.themeChoice === t));
+  });
+}
+// No automático, acompanha a troca de tema do celular com o app aberto.
+if (darkQuery) {
+  if (darkQuery.addEventListener) darkQuery.addEventListener('change', applyTheme);
+  else if (darkQuery.addListener) darkQuery.addListener(applyTheme); // Safari antigo
+}
+document.querySelectorAll('[data-theme-choice]').forEach((b) => {
+  b.addEventListener('click', () => {
+    const t = b.dataset.themeChoice;
+    state.settings.theme = THEMES.includes(t) ? t : 'auto';
+    saveState();
+    applyTheme();
+    toast('Tema: ' + THEME_NAMES[state.settings.theme]);
+  });
+});
+
+/* ---------- Navegação entre as telas ---------- */
+const VIEWS = ['hoje', 'registrar', 'historico', 'ajustes'];
+function showView(name) {
+  if (!VIEWS.includes(name)) name = 'hoje';
+  VIEWS.forEach((v) => { $('view-' + v).hidden = v !== name; });
+  document.querySelectorAll('nav.tabs button').forEach((b) => {
+    if (b.dataset.view === name) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  $('screenTitle').textContent = $('view-' + name).dataset.title;
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav.tabs button').forEach((b) => {
+  b.addEventListener('click', () => showView(b.dataset.view));
+});
+
+/* ---------- Versão nova ----------
+   Lê a página publicada, sem usar a memória do navegador, e compara o número da versão.
+   Não mexe nos dados salvos e não envia nada para fora (só lê a própria página). */
+let lastUpdateCheck = 0;
+function isNewer(a, b) { // a é mais nova que b?
+  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d > 0;
+  }
+  return false;
+}
+async function checkForUpdate(manual) {
+  lastUpdateCheck = Date.now();
+  let remote = null;
+  try {
+    // cache: 'reload' busca na internet e também renova a cópia guardada pelo navegador.
+    const res = await fetch(location.pathname, { cache: 'reload' });
+    const m = res.ok ? (await res.text()).match(/const APP_VERSION = ["'](\d+(?:\.\d+)*)["']/) : null;
+    remote = m ? m[1] : null;
+  } catch (e) { /* sem internet ou página aberta direto do arquivo */ }
+  if (remote && isNewer(remote, APP_VERSION)) {
+    $('updateBanner').innerHTML = '<div class="update-banner"><span><b>Nova versão disponível</b> (' + esc(remote) + ')</span>' +
+      '<button type="button" class="btn small" id="updateBtn">Atualizar</button></div>';
+    $('updateBtn').onclick = () => { location.replace(location.pathname + '?v=' + encodeURIComponent(remote)); };
+    if (manual) window.scrollTo(0, 0);
+  } else if (manual) {
+    toast(remote ? 'Você já está na versão mais nova (' + APP_VERSION + ')' : 'Não foi possível verificar agora');
+  }
+}
+$('checkUpdateBtn').addEventListener('click', () => checkForUpdate(true));
+// Ao voltar para o app, confere de novo (no máximo a cada 10 minutos).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - lastUpdateCheck > 10 * 60 * 1000) checkForUpdate(false);
+});
+
+/* ---------- Início ---------- */
+applyTheme();
+$('appVersion').textContent = 'Versão ' + APP_VERSION;
+$('footerVersion').textContent = 'MacroTimeline · versão ' + APP_VERSION;
+showView('hoje');
+checkForUpdate(false);
+</script>
+</body>
+</html>
