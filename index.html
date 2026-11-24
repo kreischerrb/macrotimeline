@@ -221,6 +221,43 @@
   .btn.danger { background: var(--danger); color: var(--on-danger); }
   .btn:disabled { opacity: .45; cursor: default; }
 
+  /* ---------- Registrar: busca de alimentos ---------- */
+  .search-row { display: flex; gap: 8px; }
+  .field {
+    width: 100%; font: inherit; font-size: 16px; padding: 11px 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+  }
+  .field:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .search-row .btn { flex: 0 0 auto; white-space: nowrap; }
+  .food-list { list-style: none; margin: 10px 0 0; padding: 0; }
+  .food-list li { border-top: 1px solid var(--line); }
+  .food-list li:first-child { border-top: 0; }
+  .food {
+    display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 10px 2px;
+  }
+  button.food { cursor: pointer; }
+  .food-name { font-weight: 600; color: var(--ink); }
+  .food-meta { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .tag {
+    display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
+    background: var(--card-2); color: var(--accent); margin-right: 4px;
+  }
+  .macros { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 13.5px; margin-top: 4px; color: var(--ink); }
+  .macros span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .macros i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .macros .fiber { color: var(--muted); }
+  .list-note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .list-note[hidden] { display: none; }
+
+  /* Formulário de alimento próprio */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .form-grid label.full { grid-column: 1 / -1; }
+  .form-grid .field { margin-top: 4px; }
+  .form-error { color: var(--danger); font-size: 14px; margin-top: 10px; }
+  .form-error:empty { display: none; }
+  .modal-actions .spacer { flex: 1; }
+
   /* Aviso de versão nova */
   .update-banner {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -288,11 +325,25 @@
 
   <!-- Tela: Registrar -->
   <section class="view" id="view-registrar" data-title="Registrar" hidden>
-    <div class="card building">
-      <div class="badge" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+    <div class="grid">
+      <div class="card">
+        <h2>Alimentos</h2>
+        <div class="search-row">
+          <input type="search" class="field" id="foodSearch" placeholder="Buscar (ex.: frango grel)" aria-label="Buscar alimento"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+          <button type="button" class="btn secondary" id="newFoodBtn">+ Meu alimento</button>
+        </div>
+        <div class="list-note" id="foodStatus"></div>
+        <ul class="food-list" id="foodResults"></ul>
+        <div class="list-note" id="foodMore" hidden></div>
+        <div class="hint">Valores por 100 g. “—” = sem dado na tabela. Dados nutricionais: Tabela TACO – NEPA/Unicamp.</div>
       </div>
-      <div><b>Em construção</b><p>Aqui você vai registrar o que comeu, por texto.</p></div>
+      <div class="card building">
+        <div class="badge" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+        </div>
+        <div><b>Em construção</b><p>Na próxima versão você vai escolher um alimento da lista e informar quantos gramas comeu.</p></div>
+      </div>
     </div>
   </section>
 
@@ -322,7 +373,7 @@
         <div class="badge" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
         </div>
-        <div><b>Em construção</b><p>Metas, alimentos e exportação em CSV virão nas próximas versões.</p></div>
+        <div><b>Em construção</b><p>Metas e exportação em CSV virão nas próximas versões.</p></div>
       </div>
       <div class="card" id="dataCard">
         <h2>Seus dados</h2>
@@ -384,10 +435,34 @@
   </div>
 </div>
 
+<div class="modal" id="foodModal" hidden>
+  <form class="modal-card" id="foodForm" role="dialog" aria-modal="true" aria-labelledby="foodModalTitle" novalidate>
+    <h3 id="foodModalTitle">Meu alimento</h3>
+    <p>Copie os valores do rótulo, para a porção indicada nele. O app converte para 100 g.</p>
+    <div class="form-grid">
+      <label class="full">Nome<input class="field" id="ffNome" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Whey sabor baunilha"></label>
+      <label class="full">Porção do rótulo (g)<input class="field" id="ffPorcao" type="text" inputmode="decimal" autocomplete="off" placeholder="Ex.: 30"></label>
+      <label>Calorias (kcal)<input class="field" id="ffKcal" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label>Proteína (g)<input class="field" id="ffProt" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label>Carboidrato (g)<input class="field" id="ffCarb" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label>Gordura (g)<input class="field" id="ffGord" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label class="full">Fibra (g) – opcional<input class="field" id="ffFibra" type="text" inputmode="decimal" autocomplete="off" placeholder="Deixe vazio se não tiver"></label>
+    </div>
+    <p class="hint" id="ffPreview"></p>
+    <div class="form-error" id="ffError" role="alert"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="ffDelete" hidden>Apagar</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn secondary" id="ffCancel">Cancelar</button>
+      <button type="submit" class="btn">Salvar</button>
+    </div>
+  </form>
+</div>
+
 <script>
 // Versão do app. Mude a cada nova versão, junto com a ESPECIFICACAO.md:
 // é ela que o aviso "Nova versão disponível" compara com a versão publicada.
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.3.0";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -407,7 +482,7 @@ function toast(msg) {
      settings     ajustes do app (por enquanto, o tema)
      profile      perfil da pessoa                       (próximas etapas)
      goals        metas de calorias e macros             (próximas etapas)
-     customFoods  alimentos cadastrados pela pessoa      (próximas etapas)
+     customFoods  alimentos cadastrados pela pessoa (valores do rótulo e convertidos para 100 g)
      days         refeições por dia: { "AAAA-MM-DD": { meals: [] } }
      weights      registros de peso                      (próximas etapas)
      secrets      chaves de API: NUNCA entram no backup
@@ -419,6 +494,7 @@ const THEME_NAMES = { auto: 'Automático', light: 'Claro', dark: 'Escuro' };
 const THEME_COLOR = { light: '#f3f5f8', dark: '#0b0f14' };
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const newId = () => 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 // Estado inicial (vazio), usado na primeira abertura e depois de "Apagar todos os dados".
 function defaultState() {
@@ -453,6 +529,7 @@ function normalize(s) {
   if (!isObj(s.profile)) s.profile = {};
   if (!isObj(s.goals)) s.goals = {};
   if (!Array.isArray(s.customFoods)) s.customFoods = [];
+  s.customFoods.forEach((f) => { if (isObj(f) && typeof f.id !== 'string') f.id = newId(); });
   if (!isObj(s.days)) s.days = {};
   if (!Array.isArray(s.weights)) s.weights = [];
   if (!isObj(s.secrets)) s.secrets = {};
@@ -697,6 +774,7 @@ async function importBackup(file) {
   if (!saveState()) { state = previous; return; }
   applyTheme();
   renderDataCard();
+  renderFoods();
   toast('Backup restaurado');
 }
 
@@ -720,6 +798,7 @@ async function eraseAllData() {
   saveState(true);
   applyTheme();
   renderDataCard();
+  renderFoods();
   toast('Todos os dados foram apagados');
 }
 
@@ -756,6 +835,214 @@ $('eraseBtn').addEventListener('click', eraseAllData);
 // No iPhone, o filtro de tipo de arquivo às vezes deixa o .json cinza (sem poder escolher): sem filtro lá.
 if (isIOS()) $('importFile').removeAttribute('accept');
 
+/* ---------- Alimentos: Tabela TACO e alimentos próprios ----------
+   A TACO fica em dados/taco.json (valores por 100 g; null = sem dado). Os alimentos próprios ficam em
+   state.customFoods, cada um assim:
+     { id, nome, porcaoG, rotulo: { kcal, prot, carb, gord, fibra }, por100: { kcal, prot, carb, gord, fibra },
+       criadoEm, alteradoEm }
+   "rotulo" guarda o que a pessoa digitou (para a porção do rótulo); "por100" é a conversão usada nas contas. */
+const MAX_RESULTS = 50;
+const NUTRIENTS = ['kcal', 'prot', 'carb', 'gord', 'fibra'];
+let taco = null;          // lista da TACO depois de carregada
+let tacoError = false;
+
+// Tira acentos e maiúsculas, para "feijao" achar "Feijão".
+const fold = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
+// Número no formato brasileiro; null vira "—" (sem dado).
+function fmt(v, dec) {
+  if (num(v) === null) return '—';
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+const round2 = (v) => Math.round(v * 100) / 100;
+// Gramas com uma casa decimal, ou "—" sem a unidade quando não há dado.
+const grams = (v) => (num(v) === null ? '—' : fmt(v, 1) + ' g');
+const kcalTxt = (v) => (num(v) === null ? '— kcal' : fmt(v, 0) + ' kcal');
+
+async function loadTaco() {
+  tacoError = false;
+  renderFoods();
+  try {
+    const res = await fetch('dados/taco.json?v=' + encodeURIComponent(APP_VERSION));
+    if (!res.ok) throw new Error('http ' + res.status);
+    const obj = await res.json();
+    taco = obj.alimentos.map((a) => ({
+      origem: 'taco', n: a.n, nome: a.nome, grupo: a.grupo,
+      kcal: num(a.kcal), prot: num(a.prot), carb: num(a.carb), gord: num(a.gord), fibra: num(a.fibra),
+      chave: fold(a.nome)
+    }));
+  } catch (e) {
+    tacoError = true;
+  }
+  renderFoods();
+}
+
+// Alimentos próprios válidos, no mesmo formato dos da TACO (itens estranhos ficam guardados, mas fora da busca).
+function myFoods() {
+  return state.customFoods.filter((f) => isObj(f) && typeof f.nome === 'string' && isObj(f.por100)).map((f) => ({
+    origem: 'meu', id: f.id, nome: f.nome,
+    kcal: num(f.por100.kcal), prot: num(f.por100.prot), carb: num(f.por100.carb), gord: num(f.por100.gord), fibra: num(f.por100.fibra),
+    chave: fold(f.nome)
+  }));
+}
+
+const byName = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+
+// Cada palavra digitada precisa aparecer no nome, em qualquer ordem ("frango grel").
+function searchFoods(query) {
+  const words = fold(query).split(/[\s,]+/).filter(Boolean);
+  const all = myFoods().concat(taco || []);
+  return all.filter((f) => words.every((w) => f.chave.includes(w))).sort(byName);
+}
+
+function foodRow(f) {
+  const allEmpty = ['kcal', 'prot', 'carb', 'gord'].every((k) => f[k] === null);
+  const meta = f.origem === 'meu'
+    ? '<span class="tag">meu alimento</span>toque para editar'
+    : 'TACO nº ' + f.n + ' · ' + esc(f.grupo);
+  const macros = allEmpty
+    ? '<div class="macros"><span class="fiber">Sem dados na TACO</span></div>'
+    : '<div class="macros">' +
+        '<span><i style="background:var(--kcal)"></i>' + kcalTxt(f.kcal) + '</span>' +
+        '<span><i style="background:var(--prot)"></i>P ' + grams(f.prot) + '</span>' +
+        '<span><i style="background:var(--carb)"></i>C ' + grams(f.carb) + '</span>' +
+        '<span><i style="background:var(--fat)"></i>G ' + grams(f.gord) + '</span>' +
+        '<span class="fiber">Fibra ' + grams(f.fibra) + '</span>' +
+      '</div>';
+  const inner = '<div class="food-name">' + esc(f.nome) + '</div><div class="food-meta">' + meta + '</div>' + macros;
+  return f.origem === 'meu'
+    ? '<li><button type="button" class="food" data-food-id="' + esc(f.id) + '">' + inner + '</button></li>'
+    : '<li><div class="food">' + inner + '</div></li>';
+}
+
+function renderFoods() {
+  const query = $('foodSearch').value.trim();
+  const status = $('foodStatus'), more = $('foodMore'), list = $('foodResults');
+  let items = [];
+  more.hidden = true;
+  if (!query) {
+    // Sem busca: mostra os alimentos próprios, para editar ou apagar.
+    items = myFoods().sort(byName);
+    status.textContent = items.length
+      ? 'Seus alimentos (' + items.length + '). Digite para buscar também na Tabela TACO.'
+      : 'Digite parte do nome para buscar na Tabela TACO e nos seus alimentos.';
+  } else {
+    const found = searchFoods(query);
+    items = found.slice(0, MAX_RESULTS);
+    if (!taco) status.textContent = tacoError ? 'Não foi possível carregar a Tabela TACO. Verifique a internet e abra a tela de novo.' : 'Carregando a Tabela TACO…';
+    else status.textContent = found.length ? plural(found.length, 'alimento encontrado', 'alimentos encontrados') : 'Nenhum alimento encontrado.';
+    if (found.length > MAX_RESULTS) {
+      more.hidden = false;
+      more.textContent = 'Mostrando os ' + MAX_RESULTS + ' primeiros. Digite mais palavras para refinar.';
+    }
+  }
+  list.innerHTML = items.map(foodRow).join('');
+}
+
+/* Formulário de alimento próprio */
+const FF = { kcal: 'ffKcal', prot: 'ffProt', carb: 'ffCarb', gord: 'ffGord', fibra: 'ffFibra' };
+let editingId = null;
+
+// Lê um número digitado com vírgula ou ponto. Vazio = null; inválido = NaN.
+function readNum(id) {
+  const t = $(id).value.trim().replace(/\s/g, '').replace(',', '.');
+  if (!t) return null;
+  return /^\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+}
+
+// Confere o formulário. Devolve { erro } ou { nome, porcaoG, rotulo, por100 }.
+function readFoodForm() {
+  const nome = $('ffNome').value.trim().replace(/\s+/g, ' ');
+  if (!nome) return { erro: 'Dê um nome ao alimento.' };
+  const porcao = readNum('ffPorcao');
+  if (porcao === null || !(porcao > 0) || porcao > 5000) return { erro: 'Informe a porção do rótulo em gramas (ex.: 30).' };
+  const rotulo = {};
+  for (const k of NUTRIENTS) {
+    const v = readNum(FF[k]);
+    if (k !== 'fibra' && v === null) return { erro: 'Preencha calorias, proteína, carboidrato e gordura (use 0 se o rótulo disser zero).' };
+    if (Number.isNaN(v)) return { erro: 'Use só números, com vírgula para decimais (ex.: 2,5).' };
+    rotulo[k] = v;
+  }
+  if (rotulo.prot + rotulo.carb + rotulo.gord > porcao + 0.5) return { erro: 'Proteína + carboidrato + gordura passam do peso da porção. Confira os valores.' };
+  const por100 = {};
+  NUTRIENTS.forEach((k) => { por100[k] = rotulo[k] === null ? null : round2(rotulo[k] * 100 / porcao); });
+  return { nome, porcaoG: porcao, rotulo, por100 };
+}
+
+function updatePreview() {
+  const r = readFoodForm();
+  $('ffPreview').textContent = r.erro ? '' :
+    'Por 100 g: ' + kcalTxt(r.por100.kcal) + ' · P ' + grams(r.por100.prot) + ' · C ' + grams(r.por100.carb) +
+    ' · G ' + grams(r.por100.gord) + ' · Fibra ' + grams(r.por100.fibra);
+}
+
+const brInput = (v) => (num(v) === null ? '' : String(v).replace('.', ','));
+
+function openFoodForm(id) {
+  const f = id ? state.customFoods.find((x) => isObj(x) && x.id === id) : null;
+  editingId = f ? f.id : null;
+  const r = f && isObj(f.rotulo) ? f.rotulo : {};
+  $('foodModalTitle').textContent = f ? 'Editar alimento' : 'Novo alimento';
+  $('ffNome').value = f ? f.nome : '';
+  $('ffPorcao').value = f ? brInput(f.porcaoG) : '';
+  NUTRIENTS.forEach((k) => { $(FF[k]).value = brInput(r[k]); });
+  $('ffError').textContent = '';
+  $('ffDelete').hidden = !f;
+  updatePreview();
+  $('foodModal').hidden = false;
+  if (!f) $('ffNome').focus();
+}
+function closeFoodForm() { $('foodModal').hidden = true; editingId = null; }
+
+$('foodForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const r = readFoodForm();
+  if (r.erro) { $('ffError').textContent = r.erro; return; }
+  const now = new Date().toISOString();
+  const previous = JSON.stringify(state.customFoods);
+  const existing = editingId ? state.customFoods.find((x) => isObj(x) && x.id === editingId) : null;
+  if (existing) {
+    Object.assign(existing, { nome: r.nome, porcaoG: r.porcaoG, rotulo: r.rotulo, por100: r.por100, alteradoEm: now });
+  } else {
+    state.customFoods.push({ id: newId(), nome: r.nome, porcaoG: r.porcaoG, rotulo: r.rotulo, por100: r.por100, criadoEm: now, alteradoEm: now });
+  }
+  if (!saveState()) { state.customFoods = JSON.parse(previous); return; }
+  closeFoodForm();
+  renderFoods();
+  renderDataCard();
+  toast(existing ? 'Alimento atualizado' : 'Alimento salvo');
+});
+
+$('ffDelete').addEventListener('click', async () => {
+  const id = editingId;
+  const f = state.customFoods.find((x) => isObj(x) && x.id === id);
+  if (!f) return;
+  closeFoodForm();
+  const ok = await askConfirm({
+    title: 'Apagar este alimento?',
+    html: '<p><b>' + esc(f.nome) + '</b> sai da sua lista de alimentos.</p>',
+    okText: 'Apagar', danger: true
+  });
+  if (!ok) return;
+  const previous = state.customFoods.slice();
+  state.customFoods = state.customFoods.filter((x) => x !== f);
+  if (!saveState()) { state.customFoods = previous; return; }
+  renderFoods();
+  renderDataCard();
+  toast('Alimento apagado');
+});
+
+$('ffCancel').addEventListener('click', closeFoodForm);
+$('foodModal').addEventListener('click', (e) => { if (e.target === $('foodModal')) closeFoodForm(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('foodModal').hidden) closeFoodForm(); });
+$('foodForm').addEventListener('input', () => { $('ffError').textContent = ''; updatePreview(); });
+$('newFoodBtn').addEventListener('click', () => openFoodForm(null));
+$('foodSearch').addEventListener('input', renderFoods);
+$('foodResults').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-food-id]');
+  if (b) openFoodForm(b.dataset.foodId);
+});
+
 /* ---------- Navegação entre as telas ---------- */
 const VIEWS = ['hoje', 'registrar', 'historico', 'ajustes'];
 function showView(name) {
@@ -766,6 +1053,7 @@ function showView(name) {
     else b.removeAttribute('aria-current');
   });
   $('screenTitle').textContent = $('view-' + name).dataset.title;
+  if (name === 'registrar' && tacoError) loadTaco();
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('nav.tabs button').forEach((b) => {
@@ -815,6 +1103,7 @@ renderDataCard();
 $('appVersion').textContent = 'Versão ' + APP_VERSION;
 $('footerVersion').textContent = 'MacroTimeline · versão ' + APP_VERSION;
 showView('hoje');
+loadTaco();
 checkForUpdate(false);
 </script>
 </body>
