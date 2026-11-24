@@ -4,13 +4,13 @@ App pessoal para anotar o que você comeu no dia e acompanhar as **calorias, pro
 
 Você escreve o que comeu e o app calcula os macros usando a **Tabela TACO** (NEPA/Unicamp) e os alimentos que você mesmo cadastrar.
 
-> Versão 0.1.0: por enquanto é só o esqueleto do app, com as telas ainda vazias. As funções chegam nas próximas versões.
+> Versão 0.3.0: já dá para buscar alimentos da Tabela TACO e cadastrar os seus (tela Registrar) e fazer backup dos dados (Ajustes). O registro das refeições chega nas próximas versões.
 
 ## Onde ficam os seus dados
 
 **Só no seu celular.** Nada é enviado para a internet nem fica guardado neste repositório. Cada pessoa tem os próprios dados no próprio aparelho.
 
-Por isso, se você apagar os dados do navegador ou trocar de celular, os registros não vão junto. Uma função de backup vai chegar numa próxima versão.
+Por isso, se você apagar os dados do navegador ou trocar de celular, os registros não vão junto. Use **Ajustes › Seus dados › Exportar backup** para guardar uma cópia.
 
 ## Como instalar no celular
 
